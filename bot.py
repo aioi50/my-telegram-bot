@@ -42,32 +42,30 @@ HELP_MESSAGE = (
 # 获取媒体的函数（支持图片流和视频 URL）
 def get_media(api_url):
     try:
-        url_with_param = f"{api_url}&t={int(time.time())}"  # 添加时间戳防缓存
+        url_with_param = f"{api_url}&t={int(time.time())}"
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            "Cache-Control": "no-cache"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Cache-Control": "no-cache",
+            "Referer": "https://example.com/"  # 添加 Referer 绕过反爬
         }
-        response = requests.get(url_with_param, headers=headers, allow_redirects=True, stream=True)
+        # 设置超时时间（避免长时间阻塞）
+        response = requests.get(url_with_param, headers=headers, allow_redirects=True, stream=True, timeout=10)
         
         if response.status_code == 200:
-            print(f"Requested URL: {url_with_param}")
-            print(f"Final URL: {response.url}")
-            print(f"Content-Type: {response.headers.get('Content-Type')}")
-            
+            final_url = response.url
             content_type = response.headers.get('Content-Type', '').lower()
-            if 'image' in content_type:
-                response.raw.decode_content = True
-                return 'image', response.raw  # 返回图片流
-            elif 'video' in content_type or response.url.endswith(('.mp4', '.mov', '.avi')):
-                return 'video', response.url  # 返回视频 URL
+            
+            # 检查是否为视频流（部分 API 返回的是 HTML 页面，而非直接视频）
+            if 'video' in content_type or final_url.endswith(('.mp4', '.mov', '.avi')):
+                return 'video', final_url
             else:
-                print("Unexpected response: Not an image or video")
+                print("响应不是有效的视频格式")
                 return None, None
         else:
-            print(f"Status code: {response.status_code}")
+            print(f"API 响应状态码异常: {response.status_code}")
             return None, None
     except Exception as e:
-        print(f"Error fetching media: {e}")
+        print(f"请求失败: {e}")
         return None, None
 
 # 处理机器人被添加到群组的事件
