@@ -27,7 +27,8 @@ VIDEO_API_DICT = {
     "黑丝视频": "http://api.yujn.cn/api/heisis.php?type=video",
     "白丝视频": "http://api.yujn.cn/api/baisis.php?type=video",
     "甜妹视频": "http://api.yujn.cn/api/tianmei.php?type=video",
-    "Jk视频": "http://api.yujn.cn/api/jksp.php?type=video"
+    "JK视频": "http://api.yujn.cn/api/jksp.php?type=video",
+    "jk视频": "http://api.yujn.cn/api/jksp.php?type=video"
 }
 
 # 提示信息
