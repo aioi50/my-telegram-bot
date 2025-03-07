@@ -15,7 +15,6 @@ IMAGE_API_DICT = {
     "看黑丝": "http://api.yujn.cn/api/heisi.php?type=image",
     "看白丝": "http://api.yujn.cn/api/baisi.php?type=image",
     "看诱惑": "http://api.yujn.cn/api/yht.php?type=image",
-    "看写真": "http://api.yujn.cn/api/xiezhen.php?type=image",
     "美女壁纸": "http://api.yujn.cn/api/meinv.php?type=image"
 }
 
@@ -33,9 +32,9 @@ VIDEO_API_DICT = {
 
 # 提示信息
 HELP_MESSAGE = (
-    "大家好，我是图片和视频机器人！\n"
-    "直接输入以下关键词即可获取内容：\n"
-    "【图片】看JK、看jk、看美女、看黑丝、看白丝、看诱惑、看写真、美女壁纸\n"
+    "🐑 羊羊图库已就位！发送「羊羊图库」查看指令列表\n"
+    "📌 发送对应关键词即可获取内容：\n"
+    "【图片】看JK、看jk、看美女、看黑丝、看白丝、看诱惑、美女壁纸\n"
     "【视频】小姐姐视频、刷抖音、玉足视频、热舞视频、黑丝视频、白丝视频、甜妹视频、Jk视频"
 )
 
@@ -96,18 +95,18 @@ def handle_message(message):
         media_type, result = get_media(api_url)
         
         if media_type == 'image' and result:
-            bot.send_photo(chat_id, photo=result, caption=f"来自 {text} 的图片 ({int(time.time())})")
+            bot.send_photo(chat_id, photo=result, caption=f"少冲点吧你！")
         elif media_type is None:
-            bot.reply_to(message, "抱歉，获取图片失败，请稍后再试！")
+            bot.reply_to(message, "🚧 内容发送失败，请稍后重试")
     # 检查是否触发视频关键词
     elif text in VIDEO_API_DICT:
         api_url = VIDEO_API_DICT[text]
         media_type, result = get_media(api_url)
         
         if media_type == 'video' and result:
-            bot.send_video(chat_id, video=result, caption=f"来自 {text} 的视频 ({int(time.time())})")
+            bot.send_video(chat_id, video=result, caption=f"少冲点吧你！")
         elif media_type is None:
-            bot.reply_to(message, "抱歉，获取视频失败，请稍后再试！")
+            bot.reply_to(message, "🚧 内容发送失败，请稍后重试")
 
 # 启动机器人
 bot.polling(none_stop=True)
