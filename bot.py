@@ -42,27 +42,43 @@ HELP_MESSAGE = (
 # 获取媒体的函数（支持图片流和视频 URL）
 def get_media(api_url):
     try:
-        url_with_param = f"{api_url}&t={int(time.time())}"
+        # 添加随机参数避免缓存（例如加入随机数）
+        random_seed = random.randint(1000, 9999)
+        url_with_param = f"{api_url}&t={int(time.time())}&r={random_seed}"
+        
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Cache-Control": "no-cache",
-            "Referer": "https://example.com/"  # 添加 Referer 绕过反爬
+            "Referer": "https://example.com/",  # 模拟真实来源
+            "Cache-Control": "no-cache"
         }
-        # 设置超时时间（避免长时间阻塞）
-        response = requests.get(url_with_param, headers=headers, allow_redirects=True, stream=True, timeout=10)
+        
+        # 设置超时和重试
+        response = requests.get(
+            url_with_param,
+            headers=headers,
+            allow_redirects=True,
+            stream=True,
+            timeout=10  # 10秒超时
+        )
         
         if response.status_code == 200:
             final_url = response.url
             content_type = response.headers.get('Content-Type', '').lower()
             
-            # 检查是否为视频流（部分 API 返回的是 HTML 页面，而非直接视频）
-            if 'video' in content_type or final_url.endswith(('.mp4', '.mov', '.avi')):
+            # 调试日志
+            print(f"[DEBUG] 最终 URL: {final_url}")
+            print(f"[DEBUG] Content-Type: {content_type}")
+            
+            if 'image' in content_type:
+                response.raw.decode_content = True
+                return 'image', response.raw
+            elif 'video' in content_type or final_url.endswith(('.mp4', '.mov', '.avi')):
                 return 'video', final_url
             else:
-                print("响应不是有效的视频格式")
+                print("无法识别的媒体类型")
                 return None, None
         else:
-            print(f"API 响应状态码异常: {response.status_code}")
+            print(f"API 响应异常: HTTP {response.status_code}")
             return None, None
     except Exception as e:
         print(f"请求失败: {e}")
@@ -90,22 +106,49 @@ def handle_message(message):
         bot.send_message(chat_id, HELP_MESSAGE)
     # 检查是否触发图片关键词
     elif text in IMAGE_API_DICT:
-        api_url = IMAGE_API_DICT[text]
-        media_type, result = get_media(api_url)
+        max_retries = 3  # 最大重试次数
+        retry_count = 0
         
-        if media_type == 'image' and result:
-            bot.send_photo(chat_id, photo=result, caption=f"少冲点吧你！")
-        elif media_type is None:
+        while retry_count < max_retries:        
+            api_url = IMAGE_API_DICT[text]
+            media_type, result = get_media(api_url)
+        
+            if media_type == 'image' and result:
+                try:
+                    # 尝试发送视频
+                    bot.send_photo(chat_id, photo=result, caption=f"少冲点吧你！")
+                    return  # 成功则退出函数
+                except Exception as e:
+                    print(f"发送失败，开始重试: {e}")
+                    retry_count += 1
+                    time.sleep(1)  # 等待1秒再重试
+            else:
+                break  # 获取内容失败则退出循环
+                
             bot.reply_to(message, "🚧 内容发送失败，请稍后重试")
+            
     # 检查是否触发视频关键词
     elif text in VIDEO_API_DICT:
-        api_url = VIDEO_API_DICT[text]
-        media_type, result = get_media(api_url)
+        max_retries = 3  # 最大重试次数
+        retry_count = 0
+
+        while retry_count < max_retries:
+            api_url = VIDEO_API_DICT[text]
+            media_type, result = get_media(api_url)
         
-        if media_type == 'video' and result:
-            bot.send_video(chat_id, video=result, caption=f"少冲点吧你！")
-        elif media_type is None:
-            bot.reply_to(message, "🚧 内容发送失败，请稍后重试")
+            if media_type == 'video' and result:
+                try:
+                    # 尝试发送视频
+                    bot.send_video(chat_id, video=result, caption=f"少冲点吧你！")
+                    return  # 成功则退出函数
+                except Exception as e:
+                    print(f"发送失败，开始重试: {e}")
+                    retry_count += 1
+                    time.sleep(1)  # 等待1秒再重试
+            else:
+                break  # 获取内容失败则退出循环
+                
+        bot.reply_to(message, "🚧 内容发送失败，请稍后重试")
 
 # 启动机器人
 bot.polling(none_stop=True)
