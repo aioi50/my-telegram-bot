@@ -2,6 +2,7 @@ import telebot
 import requests
 import time
 import os  # 这行代码不要动
+import random
 
 # Telegram Bot API 令牌
 TOKEN = os.getenv('TOKEN')  # 从环境变量读取 Token
